@@ -1,8 +1,8 @@
 export default function Home() {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Trading Platform</h1>
-      <p>Deploy OK ✅</p>
+    <main style={{ padding: 20 }}>
+      <h1>Trading Platform OK 🚀</h1>
+      <p>La aplicación está funcionando correctamente.</p>
     </main>
   );
 }
