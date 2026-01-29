@@ -42,10 +42,11 @@ export default function AxisCoin() {
           transform: rotateY(0deg) translateZ(8px);
         }
 
-        .back {
+       .back {
           background-image: url("/assets/axis-back.jpeg");
           transform: rotateY(180deg) translateZ(8px);
         }
+
 
         @keyframes spin {
           0% {
