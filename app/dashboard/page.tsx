@@ -20,7 +20,10 @@ export default function DashboardPage() {
     load();
   }, [router]);
 
-  async function logout() {
+  function logout() {
+  window.location.href = "/auth/logout";
+}
+
     await supabase.auth.signOut();
     router.push("/login");
   }
