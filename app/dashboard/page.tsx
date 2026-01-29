@@ -1,0 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        router.push("/login");
+        return;
+      }
+      setEmail(data.user.email ?? null);
+    }
+    load();
+  }, [router]);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Dashboard</h1>
+      <p>Sesión activa: {email ?? "..."}</p>
+      <button onClick={logout}>Cerrar sesión</button>
+    </main>
+  );
+}
