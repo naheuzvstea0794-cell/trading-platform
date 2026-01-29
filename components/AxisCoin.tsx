@@ -1,34 +1,11 @@
 "use client";
 
-import Image from "next/image";
-
 export default function AxisCoin() {
   return (
-    <div style={{ display: "grid", placeItems: "center" }}>
-      <div className="coinWrap">
-        <div className="coin">
-          {/* Frente */}
-          <div className="side front">
-            <Image
-              src="/assets/axis-front.jpg"
-              alt="AXIS Workspace Logo"
-              fill
-              priority
-              style={{ objectFit: "cover" }}
-            />
-          </div>
-
-          {/* Reverso */}
-          <div className="side back">
-            <Image
-              src="/assets/axis-back.jpg"
-              alt="AXIS Workspace Coin"
-              fill
-              priority
-              style={{ objectFit: "cover" }}
-            />
-          </div>
-        </div>
+    <div className="coinWrap">
+      <div className="coin">
+        <div className="side front" />
+        <div className="side back" />
       </div>
 
       <style jsx>{`
@@ -36,12 +13,14 @@ export default function AxisCoin() {
           width: 320px;
           height: 320px;
           perspective: 1200px;
+          display: grid;
+          place-items: center;
         }
 
         .coin {
-          position: relative;
           width: 100%;
           height: 100%;
+          position: relative;
           transform-style: preserve-3d;
           animation: spin 3.8s linear infinite;
         }
@@ -54,13 +33,17 @@ export default function AxisCoin() {
           backface-visibility: hidden;
           border: 1px solid rgba(212, 175, 55, 0.45);
           box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+          background-size: cover;
+          background-position: center;
         }
 
         .front {
+          background-image: url("/assets/axis-front.jpeg");
           transform: rotateY(0deg) translateZ(8px);
         }
 
         .back {
+          background-image: url("/assets/axis-back.jpeg");
           transform: rotateY(180deg) translateZ(8px);
         }
 
