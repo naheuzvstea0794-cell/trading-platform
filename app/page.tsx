@@ -1,4 +1,4 @@
-import AuthPanel from "@/components/AuthPanel";
+import AxisCoin from "@/components/AxisCoin";
 
 export default function Home() {
   return (
