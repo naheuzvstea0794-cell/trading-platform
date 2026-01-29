@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-
+import TradingViewWidget from "@/components/TradingViewWidget";
 export default function DashboardPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
@@ -29,6 +29,7 @@ export default function DashboardPage() {
   }
 
   return (
+<TradingViewWidget />
     <main style={{ padding: 24 }}>
       <h1>Dashboard</h1>
       <p>Sesión activa: {email ?? "..."}</p>
