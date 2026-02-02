@@ -4,13 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+type Side = "Compra" | "Venta";
+type Result = "Win" | "Loss" | "BE";
+
 type Entry = {
+  id: string;          // id local (por ahora)
   date: string;        // YYYY-MM-DD
-  asset: string;
-  side: "Compra" | "Venta";
-  result: "Win" | "Loss" | "BE";
-  pips: number;
-  usd: number;
+  asset: string;       // XAUUSD, NASDAQ, BTC...
+  side: Side;          // Compra/Venta
+  result: Result;      // Win/Loss/BE
+  pips: number;        // + / -
+  usd: number;         // + / -
   notes: string;
 };
 
@@ -18,30 +22,32 @@ export default function BitacoraPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
 
-  // Mes seleccionado (por defecto: mes actual)
+  // Mes actual (YYYY-MM)
   const [month, setMonth] = useState(() => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${d.getFullYear()}-${mm}`; // YYYY-MM
+    return `${d.getFullYear()}-${mm}`;
   });
 
-  // Entradas (por ahora en memoria; en el siguiente paso las guardamos en Supabase)
-  const [entries, setEntries] = useState<Entry[]>([]);
-
-  // Form fields
+  // Fecha hoy (YYYY-MM-DD)
   const [date, setDate] = useState(() => {
     const d = new Date();
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     return `${d.getFullYear()}-${mm}-${dd}`;
   });
+
   const [asset, setAsset] = useState("XAUUSD");
-  const [side, setSide] = useState<"Compra" | "Venta">("Compra");
-  const [result, setResult] = useState<"Win" | "Loss" | "BE">("Win");
+  const [side, setSide] = useState<Side>("Compra");
+  const [result, setResult] = useState<Result>("Win");
   const [pips, setPips] = useState<number>(0);
   const [usd, setUsd] = useState<number>(0);
   const [notes, setNotes] = useState("");
 
+  // Entradas guardadas (por ahora en memoria; en el Bloque 3 las guardamos en Supabase DB)
+  const [entries, setEntries] = useState<Entry[]>([]);
+
+  // Auth guard
   useEffect(() => {
     async function load() {
       const { data } = await supabase.auth.getUser();
@@ -54,23 +60,28 @@ export default function BitacoraPage() {
     load();
   }, [router]);
 
+  // Filtrar por mes (YYYY-MM)
   const monthEntries = useMemo(() => {
-    return entries.filter((e) => e.date.startsWith(month)); // match YYYY-MM
+    return entries.filter((e) => e.date.startsWith(month));
   }, [entries, month]);
 
+  // Total mensual USD
   const totalUsdMonth = useMemo(() => {
-    // suma por mes (USD)
-    // BE puede ser 0, wins positivos, loss negativos (tú lo defines al ingresar)
     return monthEntries.reduce((acc, e) => acc + (Number.isFinite(e.usd) ? e.usd : 0), 0);
   }, [monthEntries]);
 
+  // Total mensual Pips (opcional, pero útil)
+  const totalPipsMonth = useMemo(() => {
+    return monthEntries.reduce((acc, e) => acc + (Number.isFinite(e.pips) ? e.pips : 0), 0);
+  }, [monthEntries]);
+
   function addEntry() {
-    // validación mínima
     if (!asset.trim()) return;
 
     const newEntry: Entry = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       date,
-      asset: asset.trim(),
+      asset: asset.trim().toUpperCase(),
       side,
       result,
       pips: Number(pips) || 0,
@@ -80,78 +91,133 @@ export default function BitacoraPage() {
 
     setEntries((prev) => [newEntry, ...prev]);
 
-    // reset suave
-    setNotes("");
+    // reset parcial
+    setResult("Win");
     setPips(0);
     setUsd(0);
+    setNotes("");
   }
 
+  function deleteEntry(id: string) {
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  // ======== UI ========
+  const colors = {
+    bg: "#0B0F14",
+    card: "#111827",
+    border: "#232A36",
+    text: "#F5F7FA",
+    muted: "#9CA3AF",
+    gold: "#D4AF37",
+    goldSoft: "rgba(212,175,55,0.25)",
+    red: "#EF4444",
+  };
+
   return (
-    <main style={{ padding: 24, maxWidth: 950 }}>
-      <nav style={navStyle}>
-        <a href="/dashboard" style={tabLink}>Análisis</a>
-        <a href="/dashboard/bitacora" style={tabActive}>Bitácora</a>
-        <a href="/dashboard/libro" style={tabLink}>Libro</a>
-        <a href="/" style={tabLink}>Inicio</a>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: colors.bg,
+        color: colors.text,
+        padding: 24,
+      }}
+    >
+      {/* Top nav (la mantienes como la tienes en dashboard, aquí solo para esta página) */}
+      <nav style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+        <a href="/dashboard" style={tabLink(colors)}>Análisis</a>
+        <a href="/dashboard/bitacora" style={tabActive(colors)}>Bitácora</a>
+        <a href="/dashboard/libro" style={tabLink(colors)}>Libro</a>
+        <a href="/" style={tabLink(colors)}>Inicio</a>
       </nav>
 
-      <p style={{ marginBottom: 12 }}>
-        Sesión activa: <strong>{email ?? "..."}</strong>
-      </p>
+      <div style={{ marginBottom: 14, color: colors.muted }}>
+        Sesión activa: <strong style={{ color: colors.text }}>{email ?? "..."}</strong>
+      </div>
 
-      <header style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          marginBottom: 14,
+        }}
+      >
         <div>
-          <h1 style={{ margin: 0 }}>Bitácora de Trading</h1>
-          <p style={{ marginTop: 6, opacity: 0.85 }}>
-            Registra: Activo, Compra/Venta, Resultado, Pips, USD y notas.
+          <h1 style={{ margin: 0 }}>Bitácora</h1>
+          <p style={{ marginTop: 6, color: colors.muted, lineHeight: 1.5 }}>
+            Registra: <b>Activo</b>, <b>Compra/Venta</b>, <b>Resultado</b>, <b>Pips</b>, <b>USD</b> y una nota.
           </p>
         </div>
 
-        {/* Selector de mes + total mensual */}
-        <div style={{ display: "grid", gap: 8, minWidth: 240 }}>
-          <label style={{ fontSize: 12, opacity: 0.85 }}>
+        <div style={{ display: "grid", gap: 8, minWidth: 260 }}>
+          <label style={{ fontSize: 12, color: colors.muted }}>
             Mes
             <input
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              style={inputStyle}
+              style={inputStyle(colors)}
             />
           </label>
 
-          <div style={sumCard}>
-            <div style={{ fontSize: 12, opacity: 0.85 }}>Total del mes (USD)</div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>
-              {totalUsdMonth.toFixed(2)}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 10,
+            }}
+          >
+            <div style={sumCard(colors)}>
+              <div style={{ fontSize: 12, color: colors.muted }}>Total mes (USD)</div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{totalUsdMonth.toFixed(2)}</div>
+            </div>
+
+            <div style={sumCard(colors)}>
+              <div style={{ fontSize: 12, color: colors.muted }}>Total mes (Pips)</div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{totalPipsMonth.toFixed(1)}</div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Formulario */}
-      <form style={formCard} onSubmit={(e) => e.preventDefault()}>
-        <div style={grid2}>
+      {/* FORM */}
+      <section
+        style={{
+          border: `1px solid ${colors.border}`,
+          borderRadius: 14,
+          background: colors.card,
+          padding: 16,
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <label>
             Fecha
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inputStyle} />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={inputStyle(colors)}
+            />
           </label>
 
           <label>
-            Activo
+            Activo (ej: XAUUSD)
             <input
-              type="text"
               value={asset}
               onChange={(e) => setAsset(e.target.value)}
-              placeholder="Ej: XAUUSD, NASDAQ, BTC"
-              style={inputStyle}
+              placeholder="XAUUSD"
+              style={inputStyle(colors)}
             />
           </label>
         </div>
 
-        <div style={grid3}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
           <label>
-            Tipo de operación
-            <select value={side} onChange={(e) => setSide(e.target.value as any)} style={inputStyle}>
+            Tipo (Compra/Venta)
+            <select value={side} onChange={(e) => setSide(e.target.value as Side)} style={inputStyle(colors)}>
               <option>Compra</option>
               <option>Venta</option>
             </select>
@@ -159,7 +225,7 @@ export default function BitacoraPage() {
 
           <label>
             Resultado
-            <select value={result} onChange={(e) => setResult(e.target.value as any)} style={inputStyle}>
+            <select value={result} onChange={(e) => setResult(e.target.value as Result)} style={inputStyle(colors)}>
               <option>Win</option>
               <option>Loss</option>
               <option>BE</option>
@@ -173,63 +239,80 @@ export default function BitacoraPage() {
               step="0.1"
               value={pips}
               onChange={(e) => setPips(Number(e.target.value))}
-              style={inputStyle}
+              style={inputStyle(colors)}
             />
           </label>
         </div>
 
-        <div style={grid2}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 12 }}>
           <label>
-            USD (ganancia/pérdida)
+            USD (+/-)
             <input
               type="number"
               step="0.01"
               value={usd}
               onChange={(e) => setUsd(Number(e.target.value))}
-              style={inputStyle}
+              style={inputStyle(colors)}
             />
           </label>
 
           <label>
-            Notas
+            Nota / Comentario
             <input
-              type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Seguí plan, entrada limpia, SL respetado…"
-              style={inputStyle}
+              placeholder="Ej: Entré en zona, SL respetado…"
+              style={inputStyle(colors)}
             />
           </label>
         </div>
 
-        <button type="button" style={saveBtn} onClick={addEntry}>
-          Agregar al mes
+        <button onClick={addEntry} style={primaryBtn(colors)}>
+          Agregar entrada
         </button>
-      </form>
+      </section>
 
-      {/* Lista del mes (visual) */}
-      <section style={{ marginTop: 18 }}>
-        <h2 style={{ marginBottom: 10 }}>Entradas del mes</h2>
+      {/* TABLE */}
+      <section style={{ marginTop: 16 }}>
+        <h2 style={{ margin: "12px 0" }}>Entradas del mes</h2>
 
         {monthEntries.length === 0 ? (
-          <p style={{ opacity: 0.8 }}>Aún no hay entradas para este mes.</p>
+          <div style={{ color: colors.muted }}>Aún no hay entradas para este mes.</div>
         ) : (
           <div style={{ display: "grid", gap: 10 }}>
-            {monthEntries.map((e, idx) => (
-              <div key={`${e.date}-${idx}`} style={rowCard}>
+            {monthEntries.map((e) => (
+              <div
+                key={e.id}
+                style={{
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: 12,
+                  padding: 12,
+                  background: "rgba(0,0,0,0.25)",
+                }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <strong>{e.date} — {e.asset}</strong>
-                  <span style={{ opacity: 0.85 }}>
-                    {e.side} • {e.result}
-                  </span>
+                  <strong>
+                    {e.date} — {e.asset}
+                  </strong>
+
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={pill(colors, e.side === "Compra" ? colors.gold : "#60A5FA")}>{e.side}</span>
+                    <span style={pill(colors, e.result === "Win" ? "#22C55E" : e.result === "Loss" ? colors.red : "#A3A3A3")}>
+                      {e.result}
+                    </span>
+                    <span style={{ color: colors.muted }}>
+                      Pips: <b style={{ color: colors.text }}>{e.pips}</b>
+                    </span>
+                    <span style={{ color: colors.muted }}>
+                      USD: <b style={{ color: colors.text }}>{e.usd}</b>
+                    </span>
+                    <button onClick={() => deleteEntry(e.id)} style={dangerBtn(colors)}>
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
 
-                <div style={{ marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap", opacity: 0.9 }}>
-                  <span>Pips: <strong>{e.pips}</strong></span>
-                  <span>USD: <strong>{e.usd}</strong></span>
-                </div>
-
-                {e.notes && <div style={{ marginTop: 6, opacity: 0.85 }}>{e.notes}</div>}
+                {e.notes && <div style={{ marginTop: 8, color: colors.muted }}>{e.notes}</div>}
               </div>
             ))}
           </div>
@@ -239,90 +322,88 @@ export default function BitacoraPage() {
   );
 }
 
-/* ===== ESTILOS ===== */
+/* ===== styles ===== */
 
-const navStyle: React.CSSProperties = {
-  display: "flex",
-  gap: 10,
-  flexWrap: "wrap",
-  alignItems: "center",
-  marginBottom: 16,
-};
+function inputStyle(colors: any): React.CSSProperties {
+  return {
+    width: "100%",
+    padding: "10px 10px",
+    borderRadius: 10,
+    border: `1px solid ${colors.border}`,
+    background: colors.bg,
+    color: colors.text,
+    marginTop: 6,
+    outline: "none",
+  };
+}
 
-const tabLink: React.CSSProperties = {
-  padding: "8px 14px",
-  borderRadius: 10,
-  border: "1px solid #d4af37",
-  background: "#fff",
-  fontWeight: 600,
-  cursor: "pointer",
-  textDecoration: "none",
-  color: "#111",
-};
+function sumCard(colors: any): React.CSSProperties {
+  return {
+    borderRadius: 12,
+    border: `1px solid ${colors.border}`,
+    background: colors.card,
+    padding: 12,
+    boxShadow: `0 0 22px ${colors.goldSoft}`,
+  };
+}
 
-const tabActive: React.CSSProperties = {
-  ...tabLink,
-  background: "#d4af37",
-  color: "#000",
-};
+function tabLink(colors: any): React.CSSProperties {
+  return {
+    padding: "8px 14px",
+    borderRadius: 10,
+    border: `1px solid ${colors.gold}`,
+    background: "transparent",
+    fontWeight: 700,
+    cursor: "pointer",
+    textDecoration: "none",
+    color: colors.text,
+  };
+}
 
-const formCard: React.CSSProperties = {
-  marginTop: 14,
-  padding: 18,
-  borderRadius: 12,
-  border: "1px solid #232A36",
-  background: "#111827",
-  color: "#F5F7FA",
-  display: "grid",
-  gap: 14,
-};
+function tabActive(colors: any): React.CSSProperties {
+  return {
+    ...tabLink(colors),
+    background: colors.gold,
+    color: "#000",
+  };
+}
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid #232A36",
-  marginTop: 6,
-  background: "#0B0F14",
-  color: "#F5F7FA",
-};
+function primaryBtn(colors: any): React.CSSProperties {
+  return {
+    marginTop: 12,
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: `1px solid ${colors.gold}`,
+    background: colors.gold,
+    color: "#000",
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: `0 0 22px ${colors.goldSoft}`,
+  };
+}
 
-const saveBtn: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 10,
-  border: "1px solid #d4af37",
-  background: "#d4af37",
-  color: "#000",
-  fontWeight: 700,
-  cursor: "pointer",
-  justifySelf: "start",
-};
+function dangerBtn(colors: any): React.CSSProperties {
+  return {
+    padding: "6px 10px",
+    borderRadius: 10,
+    border: `1px solid ${colors.red}`,
+    background: "transparent",
+    color: colors.red,
+    fontWeight: 700,
+    cursor: "pointer",
+  };
+}
 
-const sumCard: React.CSSProperties = {
-  borderRadius: 12,
-  border: "1px solid #232A36",
-  background: "#111827",
-  color: "#F5F7FA",
-  padding: 12,
-};
-
-const grid2: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 14,
-};
-
-const grid3: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr",
-  gap: 14,
-};
-
-const rowCard: React.CSSProperties = {
-  borderRadius: 12,
-  border: "1px solid #232A36",
-  background: "#0B0F14",
-  color: "#F5F7FA",
-  padding: 12,
-};
-
+function pill(colors: any, c: string): React.CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "6px 10px",
+    borderRadius: 999,
+    border: `1px solid ${colors.border}`,
+    background: "rgba(0,0,0,0.25)",
+    color: c,
+    fontWeight: 800,
+    fontSize: 12,
+  };
+}
