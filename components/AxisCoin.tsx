@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 export default function AxisCoin() {
-  // Grosor del canto (sube/baja este número si quieres más o menos)
+  // Grosor del canto (px). Sube/baja este número si quieres más/menos grosor.
   const thickness = 18;
 
   return (
@@ -11,24 +11,30 @@ export default function AxisCoin() {
       <div className="coin" style={{ ["--t" as any]: `${thickness}px` }}>
         {/* FRONT */}
         <div className="face front">
-          <Image
-            src="/axis-front.png"
-            alt="AXIS front"
-            fill
-            className="img"
-            priority
-          />
+          <div className="imgWrap">
+            <Image
+              src="/axis-front.png"
+              alt="AXIS front"
+              fill
+              priority
+              sizes="180px"
+              className="img"
+            />
+          </div>
         </div>
 
         {/* BACK */}
         <div className="face back">
-          <Image
-            src="/axis-back.png"
-            alt="AXIS back"
-            fill
-            className="img"
-            priority
-          />
+          <div className="imgWrap">
+            <Image
+              src="/axis-back.png"
+              alt="AXIS back"
+              fill
+              priority
+              sizes="180px"
+              className="img"
+            />
+          </div>
         </div>
 
         {/* EDGE (canto grueso) */}
@@ -58,6 +64,22 @@ export default function AxisCoin() {
           border-radius: 50%;
           overflow: hidden;
           backface-visibility: hidden;
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+        }
+
+        /* Esto asegura que el fill de Next/Image tenga contenedor relativo */
+        .imgWrap {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          background: transparent;
+        }
+
+        /* MUY IMPORTANTE: para que NO “dañe” el logo, lo mostramos completo y centrado */
+        .img {
+          object-fit: contain; /* mantiene el diseño original */
+          object-position: center;
+          filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35));
         }
 
         .front {
@@ -68,8 +90,14 @@ export default function AxisCoin() {
           transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
         }
 
-        .img {
-          object-fit: contain;
+        /* Un aro sutil encima (no altera tu logo, solo mejora presencia) */
+        .face::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          pointer-events: none;
+          box-shadow: inset 0 0 0 2px rgba(212, 175, 55, 0.28);
         }
 
         /* CANTO (GROSOR VISIBLE AL GIRAR) */
@@ -92,6 +120,8 @@ export default function AxisCoin() {
             #d4af37 85%,
             #3a2a08 100%
           );
+
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
         }
 
         @keyframes spin {
