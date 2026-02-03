@@ -10,7 +10,7 @@ export default function AxisCoin() {
           {/* Frente */}
           <div className="side front">
             <Image
-              src="/assets/axis-front.jpg"
+              src="/axis-front.png"
               alt="AXIS Workspace Logo"
               fill
               priority
@@ -21,7 +21,7 @@ export default function AxisCoin() {
           {/* Reverso */}
           <div className="side back">
             <Image
-              src="/assets/axis-back.jpg"
+              src="/axis-back.png"
               alt="AXIS Workspace Coin"
               fill
               priority
