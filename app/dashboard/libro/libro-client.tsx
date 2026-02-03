@@ -25,13 +25,11 @@ export default function LibroClient() {
   }
 
   function openFreeBook() {
-    notify("📘 El libro gratuito se enviará a tu correo.");
+    notify("📘 Libro gratuito: se enviará a tu correo (demo).");
   }
 
   function openPremiumBook() {
-    notify(
-      "🔒 Libro premium. Próximamente disponible.\nTe avisaremos por correo cuando esté habilitado."
-    );
+    notify("🔒 Libro premium (pago): pronto. Te llegará al correo cuando esté activo (demo).");
   }
 
   const card: React.CSSProperties = {
@@ -52,51 +50,49 @@ export default function LibroClient() {
         padding: 20,
       }}
     >
-      {/* HEADER */}
       <section style={{ ...card, padding: 18 }}>
-        <h1 style={{ margin: 0, letterSpacing: 0.6 }}>📚 El Libro de AXIS</h1>
+        <h1 style={{ margin: 0, letterSpacing: 0.6 }}>📚 Biblioteca AXIS</h1>
         <p style={{ marginTop: 10, color: colors.muted, lineHeight: 1.6 }}>
-          Aquí comparto el contenido que sustenta mi forma de analizar el mercado:
-          estructura, ejecución, riesgo y mentalidad.
+          Dos versiones: una gratuita y una premium (pago). El pago aún no se gestiona,
+          pero ya se ve en la UI.
         </p>
       </section>
 
-      {/* GRID DE LIBROS */}
       <section
         style={{
           marginTop: 18,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: 18,
         }}
       >
-        {/* LIBRO GRATIS */}
+        {/* FREE */}
         <div style={{ ...card, padding: 18 }}>
           <div
             style={{
-              height: 160,
-              borderRadius: 14,
-              background:
-                "linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.05))",
+              height: 170,
+              borderRadius: 16,
+              background: "linear-gradient(135deg, rgba(212,175,55,0.22), rgba(212,175,55,0.06))",
               display: "grid",
               placeItems: "center",
-              fontSize: 42,
+              fontSize: 46,
             }}
           >
             📘
           </div>
 
-          <h2 style={{ marginTop: 14 }}>Fundamentos del Trading AXIS</h2>
-          <p style={{ color: colors.muted, lineHeight: 1.6 }}>
-            Una introducción clara y directa a mi enfoque: estructura de mercado,
-            gestión del riesgo y disciplina operativa.
-          </p>
+          <h2 style={{ marginTop: 14, marginBottom: 6 }}>Libro gratuito</h2>
+          <div style={{ color: colors.muted, marginBottom: 10 }}>Fundamentos del Trading AXIS</div>
 
-          <ul style={{ color: colors.muted, paddingLeft: 18 }}>
-            <li>Estructura de mercado</li>
-            <li>Errores comunes</li>
-            <li>Marco mental</li>
-          </ul>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <Tag colors={colors}>Estructura</Tag>
+            <Tag colors={colors}>Riesgo</Tag>
+            <Tag colors={colors}>Disciplina</Tag>
+          </div>
+
+          <p style={{ color: colors.muted, lineHeight: 1.6, marginTop: 0 }}>
+            Lectura introductoria para entender el sistema y cómo se ejecuta sin improvisación.
+          </p>
 
           <button
             onClick={openFreeBook}
@@ -113,38 +109,38 @@ export default function LibroClient() {
               boxShadow: `0 0 24px ${colors.goldSoft}`,
             }}
           >
-            Leer / Enviar a mi correo
+            Abrir / Enviar a mi correo
           </button>
         </div>
 
-        {/* LIBRO PREMIUM */}
+        {/* PREMIUM */}
         <div style={{ ...card, padding: 18, position: "relative" }}>
           <div
             style={{
-              height: 160,
-              borderRadius: 14,
-              background:
-                "linear-gradient(135deg, rgba(0,0,0,0.55), rgba(212,175,55,0.08))",
+              height: 170,
+              borderRadius: 16,
+              background: "linear-gradient(135deg, rgba(0,0,0,0.55), rgba(212,175,55,0.08))",
               display: "grid",
               placeItems: "center",
-              fontSize: 42,
+              fontSize: 46,
             }}
           >
             📕
           </div>
 
-          <h2 style={{ marginTop: 14 }}>Sistema AXIS – Edición Completa</h2>
-          <p style={{ color: colors.muted, lineHeight: 1.6 }}>
-            El desarrollo completo del sistema: reglas, ejemplos reales,
-            bitácora avanzada y gestión emocional.
-          </p>
+          <h2 style={{ marginTop: 14, marginBottom: 6 }}>Libro premium (pago)</h2>
+          <div style={{ color: colors.muted, marginBottom: 10 }}>Sistema AXIS — Edición Completa</div>
 
-          <ul style={{ color: colors.muted, paddingLeft: 18 }}>
-            <li>Modelo completo de ejecución</li>
-            <li>Casos reales</li>
-            <li>Bitácora profesional</li>
-            <li>Psicología aplicada</li>
-          </ul>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <Tag colors={colors}>Reglas</Tag>
+            <Tag colors={colors}>Casos reales</Tag>
+            <Tag colors={colors}>Bitácora PRO</Tag>
+            <Tag colors={colors}>Psicología</Tag>
+          </div>
+
+          <p style={{ color: colors.muted, lineHeight: 1.6, marginTop: 0 }}>
+            Placeholder de pago. No cobramos aún, pero al dar clic se simula envío al correo.
+          </p>
 
           <button
             onClick={openPremiumBook}
@@ -155,15 +151,14 @@ export default function LibroClient() {
               borderRadius: 14,
               border: `1px solid ${colors.border}`,
               background: "rgba(11,15,20,0.45)",
-              color: colors.muted,
+              color: colors.text,
               fontWeight: 900,
               cursor: "pointer",
             }}
           >
-            🔒 Próximamente (Libro Pago)
+            🔒 Abrir (Pago — Próximamente)
           </button>
 
-          {/* CINTA PREMIUM */}
           <div
             style={{
               position: "absolute",
@@ -183,7 +178,6 @@ export default function LibroClient() {
         </div>
       </section>
 
-      {/* TOAST */}
       {toast ? (
         <div
           style={{
@@ -195,7 +189,6 @@ export default function LibroClient() {
             background: colors.card,
             padding: "12px 14px",
             color: colors.text,
-            whiteSpace: "pre-line",
             boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
           }}
         >
@@ -203,5 +196,24 @@ export default function LibroClient() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+function Tag({ children, colors }: { children: React.ReactNode; colors: any }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        borderRadius: 999,
+        padding: "7px 10px",
+        border: `1px solid ${colors.border}`,
+        background: "rgba(11,15,20,0.28)",
+        color: colors.muted,
+        fontSize: 12,
+      }}
+    >
+      {children}
+    </span>
   );
 }
