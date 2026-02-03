@@ -1,10 +1,10 @@
 "use client";
 
 export default function AxisCoin() {
-  const size = 240;      // 👈 tamaño total (ANTES estaba más grande)
-  const coinSize = 200; // 👈 tamaño real de la moneda
-  const thickness = 20; // 👈 grosor real
-  const slices = 28;    // 👈 capas del canto (volumen)
+  const stageSize = 300; // 👈 contenedor grande (como antes)
+  const coinSize = 260;  // 👈 moneda grande
+  const thickness = 22;  // 👈 grosor real
+  const slices = 32;     // 👈 capas para volumen real
 
   return (
     <div className="coinStage">
@@ -19,7 +19,7 @@ export default function AxisCoin() {
           <img src="/assets/axis-back.jpeg" alt="AXIS back" />
         </div>
 
-        {/* CANTO VOLUMÉTRICO */}
+        {/* CANTO OSCURO Y GRUESO */}
         {Array.from({ length: slices }).map((_, i) => {
           const z = -thickness / 2 + (i * thickness) / slices;
           return (
@@ -34,9 +34,9 @@ export default function AxisCoin() {
 
       <style jsx>{`
         .coinStage {
-          width: ${size}px;
-          height: ${size}px;
-          perspective: 1400px;
+          width: ${stageSize}px;
+          height: ${stageSize}px;
+          perspective: 1600px;
           display: grid;
           place-items: center;
         }
@@ -55,8 +55,8 @@ export default function AxisCoin() {
           border-radius: 50%;
           overflow: hidden;
           backface-visibility: hidden;
-          box-shadow: 0 22px 70px rgba(0, 0, 0, 0.6);
           background: #0b0f14;
+          box-shadow: 0 26px 80px rgba(0, 0, 0, 0.65);
           z-index: 10;
         }
 
@@ -76,19 +76,21 @@ export default function AxisCoin() {
           display: block;
         }
 
-        /* CANTO CON VOLUMEN (NO PLANO) */
+        /* CANTO OSCURO (NO DORADO, NO PLANO) */
         .edgeSlice {
           position: absolute;
           inset: 0;
           border-radius: 50%;
           background: linear-gradient(
             to right,
-            #2a1f07,
-            #d4af37,
-            #f6e39b,
-            #8a6516
+            #050608,
+            #111318,
+            #1c1f26,
+            #0a0c10
           );
-          box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.35);
+          box-shadow:
+            inset 0 0 8px rgba(0, 0, 0, 0.6),
+            inset 0 0 2px rgba(255, 255, 255, 0.04);
         }
 
         @keyframes spin {
