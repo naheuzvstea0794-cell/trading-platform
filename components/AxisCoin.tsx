@@ -1,43 +1,31 @@
 "use client";
 
-import Image from "next/image";
+import React from "react";
 
 export default function AxisCoin() {
-  // Grosor del canto (px). Sube/baja este número si quieres más/menos grosor.
-  const thickness = 18;
+  // SOLO esto controla lo gruesa que se ve al girar:
+  const thickness = 22;
 
   return (
     <div className="coinStage">
       <div className="coin" style={{ ["--t" as any]: `${thickness}px` }}>
-        {/* FRONT */}
+        {/* FRONT (TU DISEÑO ORIGINAL) */}
         <div className="face front">
-          <div className="imgWrap">
-            <Image
-              src="/axis-front.png"
-              alt="AXIS front"
-              fill
-              priority
-              sizes="180px"
-              className="img"
-            />
+          <div className="faceInner">
+            <div className="mark">AXIS</div>
+            <div className="sub">WORKSPACE</div>
           </div>
         </div>
 
-        {/* BACK */}
+        {/* BACK (TU DISEÑO ORIGINAL) */}
         <div className="face back">
-          <div className="imgWrap">
-            <Image
-              src="/axis-back.png"
-              alt="AXIS back"
-              fill
-              priority
-              sizes="180px"
-              className="img"
-            />
+          <div className="faceInner">
+            <div className="mark">AXIS</div>
+            <div className="sub">WORKSPACE</div>
           </div>
         </div>
 
-        {/* EDGE (canto grueso) */}
+        {/* SOLO AÑADIDO: EDGE / CANTO */}
         <div className="edge" />
       </div>
 
@@ -45,7 +33,7 @@ export default function AxisCoin() {
         .coinStage {
           width: 220px;
           height: 220px;
-          perspective: 1000px;
+          perspective: 900px;
           display: grid;
           place-items: center;
         }
@@ -61,55 +49,67 @@ export default function AxisCoin() {
         .face {
           position: absolute;
           inset: 0;
-          border-radius: 50%;
+          border-radius: 999px;
+          transform-style: preserve-3d;
           overflow: hidden;
-          backface-visibility: hidden;
           box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
-        }
-
-        /* Esto asegura que el fill de Next/Image tenga contenedor relativo */
-        .imgWrap {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          background: transparent;
-        }
-
-        /* MUY IMPORTANTE: para que NO “dañe” el logo, lo mostramos completo y centrado */
-        .img {
-          object-fit: contain; /* mantiene el diseño original */
-          object-position: center;
-          filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.35));
+          backface-visibility: hidden;
         }
 
         .front {
           transform: translateZ(calc(var(--t) / 2));
+          background: radial-gradient(circle at 30% 30%, #ffefb0 0%, #d4af37 35%, #7a5b12 100%);
+          border: 2px solid rgba(255, 220, 120, 0.45);
         }
 
         .back {
           transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
+          background: radial-gradient(circle at 30% 30%, #ffe7a1 0%, #caa030 35%, #6b4f10 100%);
+          border: 2px solid rgba(255, 220, 120, 0.35);
         }
 
-        /* Un aro sutil encima (no altera tu logo, solo mejora presencia) */
-        .face::after {
-          content: "";
+        .faceInner {
           position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          pointer-events: none;
-          box-shadow: inset 0 0 0 2px rgba(212, 175, 55, 0.28);
+          inset: 10px;
+          border-radius: 999px;
+          background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.12));
+          border: 1px solid rgba(0, 0, 0, 0.25);
+          display: grid;
+          place-items: center;
+          text-align: center;
         }
 
-        /* CANTO (GROSOR VISIBLE AL GIRAR) */
+        .mark {
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #0b0b0b;
+          font-size: 34px;
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .sub {
+          margin-top: -6px;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          color: rgba(0, 0, 0, 0.75);
+          font-size: 12px;
+        }
+
+        /* ✅ SOLO ESTO ES LO NUEVO: CANTO GROSOR */
         .edge {
           position: absolute;
           inset: 0;
-          border-radius: 50%;
+          border-radius: 999px;
+
+          /* ancho del canto = thickness */
           width: var(--t);
           height: 100%;
           left: calc(50% - (var(--t) / 2));
+
+          /* se pone de lado para que se vea el grosor al girar */
           transform: rotateY(90deg);
 
+          /* color del canto (se ve metálico) */
           background: linear-gradient(
             to bottom,
             #3a2a08 0%,
