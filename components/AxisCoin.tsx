@@ -1,31 +1,43 @@
 "use client";
 
-import React from "react";
+import Image from "next/image";
 
 export default function AxisCoin() {
-  // SOLO esto controla lo gruesa que se ve al girar:
+  // Grosor del canto (px). Cambia SOLO este número si quieres más grosor.
   const thickness = 22;
 
   return (
     <div className="coinStage">
       <div className="coin" style={{ ["--t" as any]: `${thickness}px` }}>
-        {/* FRONT (TU DISEÑO ORIGINAL) */}
+        {/* FRONT */}
         <div className="face front">
-          <div className="faceInner">
-            <div className="mark">AXIS</div>
-            <div className="sub">WORKSPACE</div>
+          <div className="imgWrap">
+            <Image
+              src="/axis-front.png"
+              alt="AXIS front"
+              fill
+              priority
+              sizes="180px"
+              className="img"
+            />
           </div>
         </div>
 
-        {/* BACK (TU DISEÑO ORIGINAL) */}
+        {/* BACK */}
         <div className="face back">
-          <div className="faceInner">
-            <div className="mark">AXIS</div>
-            <div className="sub">WORKSPACE</div>
+          <div className="imgWrap">
+            <Image
+              src="/axis-back.png"
+              alt="AXIS back"
+              fill
+              priority
+              sizes="180px"
+              className="img"
+            />
           </div>
         </div>
 
-        {/* SOLO AÑADIDO: EDGE / CANTO */}
+        {/* EDGE (CANTO / GROSOR) */}
         <div className="edge" />
       </div>
 
@@ -33,7 +45,7 @@ export default function AxisCoin() {
         .coinStage {
           width: 220px;
           height: 220px;
-          perspective: 900px;
+          perspective: 1000px;
           display: grid;
           place-items: center;
         }
@@ -49,67 +61,43 @@ export default function AxisCoin() {
         .face {
           position: absolute;
           inset: 0;
-          border-radius: 999px;
-          transform-style: preserve-3d;
+          border-radius: 50%;
           overflow: hidden;
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+          transform-style: preserve-3d;
           backface-visibility: hidden;
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
         }
 
         .front {
           transform: translateZ(calc(var(--t) / 2));
-          background: radial-gradient(circle at 30% 30%, #ffefb0 0%, #d4af37 35%, #7a5b12 100%);
-          border: 2px solid rgba(255, 220, 120, 0.45);
         }
 
         .back {
           transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
-          background: radial-gradient(circle at 30% 30%, #ffe7a1 0%, #caa030 35%, #6b4f10 100%);
-          border: 2px solid rgba(255, 220, 120, 0.35);
         }
 
-        .faceInner {
-          position: absolute;
-          inset: 10px;
-          border-radius: 999px;
-          background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.12));
-          border: 1px solid rgba(0, 0, 0, 0.25);
-          display: grid;
-          place-items: center;
-          text-align: center;
+        .imgWrap {
+          position: relative;
+          width: 100%;
+          height: 100%;
         }
 
-        .mark {
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          color: #0b0b0b;
-          font-size: 34px;
-          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+        /* Mantiene el logo exactamente como es (no lo deforma) */
+        .img {
+          object-fit: contain;
+          object-position: center;
         }
 
-        .sub {
-          margin-top: -6px;
-          font-weight: 700;
-          letter-spacing: 0.22em;
-          color: rgba(0, 0, 0, 0.75);
-          font-size: 12px;
-        }
-
-        /* ✅ SOLO ESTO ES LO NUEVO: CANTO GROSOR */
+        /* CANTO: lo que da el grosor al girar */
         .edge {
           position: absolute;
           inset: 0;
-          border-radius: 999px;
-
-          /* ancho del canto = thickness */
+          border-radius: 50%;
           width: var(--t);
           height: 100%;
           left: calc(50% - (var(--t) / 2));
-
-          /* se pone de lado para que se vea el grosor al girar */
           transform: rotateY(90deg);
 
-          /* color del canto (se ve metálico) */
           background: linear-gradient(
             to bottom,
             #3a2a08 0%,
