@@ -4,406 +4,272 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-type Side = "Compra" | "Venta";
-type Result = "Win" | "Loss" | "BE";
-
+/* =======================
+   Tipos
+======================= */
 type Entry = {
-  id: string;          // id local (por ahora)
-  date: string;        // YYYY-MM-DD
-  asset: string;       // XAUUSD, NASDAQ, BTC...
-  side: Side;          // Compra/Venta
-  result: Result;      // Win/Loss/BE
-  pips: number;        // + / -
-  usd: number;         // + / -
-  notes: string;
+  id: string;
+  date: string; // YYYY-MM-DD
+  asset: string;
+  side: "Compra" | "Venta";
+  result: "Win" | "Loss" | "BE";
+  pips: number;
+  usd: number;
+  note: string;
 };
 
 export default function BitacoraPage() {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>("");
 
-  // Mes actual (YYYY-MM)
-  const [month, setMonth] = useState(() => {
-    const d = new Date();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${d.getFullYear()}-${mm}`;
-  });
-
-  // Fecha hoy (YYYY-MM-DD)
-  const [date, setDate] = useState(() => {
-    const d = new Date();
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${d.getFullYear()}-${mm}-${dd}`;
-  });
-
-  const [asset, setAsset] = useState("XAUUSD");
-  const [side, setSide] = useState<Side>("Compra");
-  const [result, setResult] = useState<Result>("Win");
-  const [pips, setPips] = useState<number>(0);
-  const [usd, setUsd] = useState<number>(0);
-  const [notes, setNotes] = useState("");
-
-  // Entradas guardadas (por ahora en memoria; en el Bloque 3 las guardamos en Supabase DB)
+  /* ===== Estado ===== */
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [month, setMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
 
-  // Auth guard
+  const [form, setForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    asset: "XAUUSD",
+    side: "Compra" as "Compra" | "Venta",
+    result: "Win" as "Win" | "Loss" | "BE",
+    pips: 0,
+    usd: 0,
+    note: "",
+  });
+
+  /* ===== Auth ===== */
   useEffect(() => {
-    async function load() {
+    (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         router.replace("/login");
         return;
       }
-      setEmail(data.user.email ?? null);
-    }
-    load();
+      setEmail(data.user.email ?? "");
+    })();
   }, [router]);
 
-  // Filtrar por mes (YYYY-MM)
-  const monthEntries = useMemo(() => {
-    return entries.filter((e) => e.date.startsWith(month));
+  /* ===== Helpers ===== */
+  const monthEntries = useMemo(
+    () => entries.filter(e => e.date.startsWith(month)),
+    [entries, month]
+  );
+
+  const totalUSD = useMemo(
+    () => monthEntries.reduce((a, b) => a + b.usd, 0),
+    [monthEntries]
+  );
+
+  const totalPips = useMemo(
+    () => monthEntries.reduce((a, b) => a + b.pips, 0),
+    [monthEntries]
+  );
+
+  const calendarDays = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    const first = new Date(y, m - 1, 1);
+    const last = new Date(y, m, 0);
+    const days: { date: string; usd: number; pips: number }[] = [];
+
+    for (let d = 1; d <= last.getDate(); d++) {
+      const date = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const dayEntries = entries.filter(e => e.date === date);
+      days.push({
+        date,
+        usd: dayEntries.reduce((a, b) => a + b.usd, 0),
+        pips: dayEntries.reduce((a, b) => a + b.pips, 0),
+      });
+    }
+    return days;
   }, [entries, month]);
 
-  // Total mensual USD
-  const totalUsdMonth = useMemo(() => {
-    return monthEntries.reduce((acc, e) => acc + (Number.isFinite(e.usd) ? e.usd : 0), 0);
-  }, [monthEntries]);
-
-  // Total mensual Pips (opcional, pero útil)
-  const totalPipsMonth = useMemo(() => {
-    return monthEntries.reduce((acc, e) => acc + (Number.isFinite(e.pips) ? e.pips : 0), 0);
-  }, [monthEntries]);
-
+  /* ===== Actions ===== */
   function addEntry() {
-    if (!asset.trim()) return;
-
-    const newEntry: Entry = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      date,
-      asset: asset.trim().toUpperCase(),
-      side,
-      result,
-      pips: Number(pips) || 0,
-      usd: Number(usd) || 0,
-      notes: notes.trim(),
-    };
-
-    setEntries((prev) => [newEntry, ...prev]);
-
-    // reset parcial
-    setResult("Win");
-    setPips(0);
-    setUsd(0);
-    setNotes("");
+    setEntries(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), ...form },
+    ]);
+    setForm(f => ({ ...f, pips: 0, usd: 0, note: "" }));
   }
 
-  function deleteEntry(id: string) {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  function logout() {
+    window.location.href = "/auth/logout";
   }
 
-  // ======== UI ========
-  const colors = {
-    bg: "#0B0F14",
-    card: "#111827",
-    border: "#232A36",
-    text: "#F5F7FA",
-    muted: "#9CA3AF",
-    gold: "#D4AF37",
-    goldSoft: "rgba(212,175,55,0.25)",
-    red: "#EF4444",
-  };
-
+  /* =======================
+     Render
+======================= */
   return (
     <main
       style={{
-        minHeight: "100vh",
-        background: colors.bg,
-        color: colors.text,
+        minHeight: "calc(100vh - 86px)",
         padding: 24,
+        background:
+          "radial-gradient(1200px 600px at 20% 10%, rgba(212,175,55,0.12), transparent 55%), #0B0F14",
+        color: "#F5F7FA",
       }}
     >
-      {/* Top nav (la mantienes como la tienes en dashboard, aquí solo para esta página) */}
-      <nav style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-        <a href="/dashboard" style={tabLink(colors)}>Análisis</a>
-        <a href="/dashboard/bitacora" style={tabActive(colors)}>Bitácora</a>
-        <a href="/dashboard/libro" style={tabLink(colors)}>Libro</a>
-        <a href="/" style={tabLink(colors)}>Inicio</a>
-      </nav>
-
-      <div style={{ marginBottom: 14, color: colors.muted }}>
-        Sesión activa: <strong style={{ color: colors.text }}>{email ?? "..."}</strong>
-      </div>
-
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-          marginBottom: 14,
-        }}
-      >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0 }}>Bitácora</h1>
-          <p style={{ marginTop: 6, color: colors.muted, lineHeight: 1.5 }}>
-            Registra: <b>Activo</b>, <b>Compra/Venta</b>, <b>Resultado</b>, <b>Pips</b>, <b>USD</b> y una nota.
+          <p style={{ margin: 0, color: "#9CA3AF" }}>
+            Sesión activa: <b style={{ color: "#F5F7FA" }}>{email}</b>
+          </p>
+          <h1 style={{ marginTop: 6 }}>Bitácora</h1>
+          <p style={{ color: "#9CA3AF" }}>
+            Registra: Activo, Compra/Venta, Resultado, Pips, USD y nota.
           </p>
         </div>
 
-        <div style={{ display: "grid", gap: 8, minWidth: 260 }}>
-          <label style={{ fontSize: 12, color: colors.muted }}>
-            Mes
-            <input
-              type="month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              style={inputStyle(colors)}
-            />
-          </label>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 10,
-            }}
-          >
-            <div style={sumCard(colors)}>
-              <div style={{ fontSize: 12, color: colors.muted }}>Total mes (USD)</div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>{totalUsdMonth.toFixed(2)}</div>
+        <div>
+          <label style={{ fontSize: 12, color: "#9CA3AF" }}>Mes</label>
+          <input
+            type="month"
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            style={input}
+          />
+          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+            <div style={statBox}>
+              <div>Total mes (USD)</div>
+              <b>{totalUSD.toFixed(2)}</b>
             </div>
-
-            <div style={sumCard(colors)}>
-              <div style={{ fontSize: 12, color: colors.muted }}>Total mes (Pips)</div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>{totalPipsMonth.toFixed(1)}</div>
+            <div style={statBox}>
+              <div>Total mes (Pips)</div>
+              <b>{totalPips.toFixed(1)}</b>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* FORM */}
-      <section
-        style={{
-          border: `1px solid ${colors.border}`,
-          borderRadius: 14,
-          background: colors.card,
-          padding: 16,
-        }}
-      >
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label>
-            Fecha
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              style={inputStyle(colors)}
-            />
-          </label>
-
-          <label>
-            Activo (ej: XAUUSD)
-            <input
-              value={asset}
-              onChange={(e) => setAsset(e.target.value)}
-              placeholder="XAUUSD"
-              style={inputStyle(colors)}
-            />
-          </label>
+      {/* Formulario */}
+      <section style={card}>
+        <div style={grid}>
+          <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={input} />
+          <input placeholder="Activo (ej: XAUUSD)" value={form.asset} onChange={e => setForm({ ...form, asset: e.target.value })} style={input} />
+          <select value={form.side} onChange={e => setForm({ ...form, side: e.target.value as any })} style={input}>
+            <option>Compra</option>
+            <option>Venta</option>
+          </select>
+          <select value={form.result} onChange={e => setForm({ ...form, result: e.target.value as any })} style={input}>
+            <option>Win</option>
+            <option>Loss</option>
+            <option>BE</option>
+          </select>
+          <input type="number" placeholder="Pips" value={form.pips} onChange={e => setForm({ ...form, pips: +e.target.value })} style={input} />
+          <input type="number" placeholder="USD (+/-)" value={form.usd} onChange={e => setForm({ ...form, usd: +e.target.value })} style={input} />
+          <input placeholder="Nota / Comentario" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} style={input} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
-          <label>
-            Tipo (Compra/Venta)
-            <select value={side} onChange={(e) => setSide(e.target.value as Side)} style={inputStyle(colors)}>
-              <option>Compra</option>
-              <option>Venta</option>
-            </select>
-          </label>
-
-          <label>
-            Resultado
-            <select value={result} onChange={(e) => setResult(e.target.value as Result)} style={inputStyle(colors)}>
-              <option>Win</option>
-              <option>Loss</option>
-              <option>BE</option>
-            </select>
-          </label>
-
-          <label>
-            Pips
-            <input
-              type="number"
-              step="0.1"
-              value={pips}
-              onChange={(e) => setPips(Number(e.target.value))}
-              style={inputStyle(colors)}
-            />
-          </label>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 12 }}>
-          <label>
-            USD (+/-)
-            <input
-              type="number"
-              step="0.01"
-              value={usd}
-              onChange={(e) => setUsd(Number(e.target.value))}
-              style={inputStyle(colors)}
-            />
-          </label>
-
-          <label>
-            Nota / Comentario
-            <input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Entré en zona, SL respetado…"
-              style={inputStyle(colors)}
-            />
-          </label>
-        </div>
-
-        <button onClick={addEntry} style={primaryBtn(colors)}>
-          Agregar entrada
-        </button>
+        <button onClick={addEntry} style={btnPrimary}>Agregar entrada</button>
       </section>
 
-      {/* TABLE */}
-      <section style={{ marginTop: 16 }}>
-        <h2 style={{ margin: "12px 0" }}>Entradas del mes</h2>
-
-        {monthEntries.length === 0 ? (
-          <div style={{ color: colors.muted }}>Aún no hay entradas para este mes.</div>
-        ) : (
-          <div style={{ display: "grid", gap: 10 }}>
-            {monthEntries.map((e) => (
-              <div
-                key={e.id}
-                style={{
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: 12,
-                  padding: 12,
-                  background: "rgba(0,0,0,0.25)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <strong>
-                    {e.date} — {e.asset}
-                  </strong>
-
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                    <span style={pill(colors, e.side === "Compra" ? colors.gold : "#60A5FA")}>{e.side}</span>
-                    <span style={pill(colors, e.result === "Win" ? "#22C55E" : e.result === "Loss" ? colors.red : "#A3A3A3")}>
-                      {e.result}
-                    </span>
-                    <span style={{ color: colors.muted }}>
-                      Pips: <b style={{ color: colors.text }}>{e.pips}</b>
-                    </span>
-                    <span style={{ color: colors.muted }}>
-                      USD: <b style={{ color: colors.text }}>{e.usd}</b>
-                    </span>
-                    <button onClick={() => deleteEntry(e.id)} style={dangerBtn(colors)}>
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-
-                {e.notes && <div style={{ marginTop: 8, color: colors.muted }}>{e.notes}</div>}
-              </div>
-            ))}
+      {/* Entradas */}
+      <section style={{ marginTop: 18 }}>
+        <h2>Entradas del mes</h2>
+        {monthEntries.length === 0 && <p style={{ color: "#9CA3AF" }}>Aún no hay entradas.</p>}
+        {monthEntries.map(e => (
+          <div key={e.id} style={row}>
+            <span>{e.date}</span>
+            <span>{e.asset}</span>
+            <span>{e.side}</span>
+            <span>{e.result}</span>
+            <span>{e.pips} pips</span>
+            <span>{e.usd} USD</span>
+            <span>{e.note}</span>
           </div>
-        )}
+        ))}
       </section>
+
+      {/* Calendario */}
+      <section style={{ marginTop: 32 }}>
+        <h2>Calendario mensual</h2>
+        <div style={calendar}>
+          {calendarDays.map(d => (
+            <div key={d.date} style={calendarDay}>
+              <b>{d.date.split("-")[2]}</b>
+              <div>{d.usd !== 0 && `${d.usd} USD`}</div>
+              <div>{d.pips !== 0 && `${d.pips} pips`}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <button onClick={logout} style={{ ...btnDanger, marginTop: 40 }}>
+        Salir
+      </button>
     </main>
   );
 }
 
-/* ===== styles ===== */
+/* =======================
+   Styles
+======================= */
+const input: React.CSSProperties = {
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "1px solid #232A36",
+  background: "#0B0F14",
+  color: "#F5F7FA",
+};
 
-function inputStyle(colors: any): React.CSSProperties {
-  return {
-    width: "100%",
-    padding: "10px 10px",
-    borderRadius: 10,
-    border: `1px solid ${colors.border}`,
-    background: colors.bg,
-    color: colors.text,
-    marginTop: 6,
-    outline: "none",
-  };
-}
+const btnPrimary: React.CSSProperties = {
+  marginTop: 12,
+  padding: "10px 14px",
+  borderRadius: 10,
+  background: "#D4AF37",
+  color: "#111",
+  fontWeight: 700,
+};
 
-function sumCard(colors: any): React.CSSProperties {
-  return {
-    borderRadius: 12,
-    border: `1px solid ${colors.border}`,
-    background: colors.card,
-    padding: 12,
-    boxShadow: `0 0 22px ${colors.goldSoft}`,
-  };
-}
+const btnDanger: React.CSSProperties = {
+  padding: "10px 14px",
+  borderRadius: 10,
+  background: "#7F1D1D",
+  color: "#fff",
+};
 
-function tabLink(colors: any): React.CSSProperties {
-  return {
-    padding: "8px 14px",
-    borderRadius: 10,
-    border: `1px solid ${colors.gold}`,
-    background: "transparent",
-    fontWeight: 700,
-    cursor: "pointer",
-    textDecoration: "none",
-    color: colors.text,
-  };
-}
+const card: React.CSSProperties = {
+  marginTop: 16,
+  padding: 16,
+  borderRadius: 14,
+  border: "1px solid #232A36",
+  background: "rgba(255,255,255,0.02)",
+};
 
-function tabActive(colors: any): React.CSSProperties {
-  return {
-    ...tabLink(colors),
-    background: colors.gold,
-    color: "#000",
-  };
-}
+const grid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  gap: 10,
+};
 
-function primaryBtn(colors: any): React.CSSProperties {
-  return {
-    marginTop: 12,
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: `1px solid ${colors.gold}`,
-    background: colors.gold,
-    color: "#000",
-    fontWeight: 800,
-    cursor: "pointer",
-    boxShadow: `0 0 22px ${colors.goldSoft}`,
-  };
-}
+const row: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr 2fr",
+  gap: 8,
+  padding: 8,
+  borderBottom: "1px solid #232A36",
+};
 
-function dangerBtn(colors: any): React.CSSProperties {
-  return {
-    padding: "6px 10px",
-    borderRadius: 10,
-    border: `1px solid ${colors.red}`,
-    background: "transparent",
-    color: colors.red,
-    fontWeight: 700,
-    cursor: "pointer",
-  };
-}
+const statBox: React.CSSProperties = {
+  padding: 10,
+  borderRadius: 10,
+  border: "1px solid #232A36",
+  background: "rgba(255,255,255,0.03)",
+};
 
-function pill(colors: any, c: string): React.CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "6px 10px",
-    borderRadius: 999,
-    border: `1px solid ${colors.border}`,
-    background: "rgba(0,0,0,0.25)",
-    color: c,
-    fontWeight: 800,
-    fontSize: 12,
-  };
-}
+const calendar: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(7, 1fr)",
+  gap: 8,
+};
+
+const calendarDay: React.CSSProperties = {
+  padding: 8,
+  borderRadius: 10,
+  border: "1px solid #232A36",
+  minHeight: 70,
+};
+

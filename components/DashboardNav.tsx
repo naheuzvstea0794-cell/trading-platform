@@ -8,14 +8,21 @@ export default function DashboardNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const navLink = (href: string, active: boolean) => ({
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/dashboard" && pathname?.startsWith(href));
+
+  const navLink = (href: string) => ({
     padding: "10px 14px",
     borderRadius: 12,
-    border: `1px solid ${active ? "rgba(212,175,55,0.55)" : "#232A36"}`,
+    border: `1px solid ${
+      isActive(href) ? "rgba(212,175,55,0.55)" : "#232A36"
+    }`,
     textDecoration: "none",
     color: "#F5F7FA",
-    background: active ? "rgba(212,175,55,0.18)" : "rgba(11,15,20,0.35)",
-    fontWeight: 700 as const,
+    background: isActive(href)
+      ? "rgba(212,175,55,0.18)"
+      : "rgba(11,15,20,0.35)",
+    fontWeight: 800 as const,
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
@@ -23,7 +30,7 @@ export default function DashboardNav() {
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/");      // ✅ vuelve al inicio bonito
+    router.replace("/"); // ✅ fuera del dashboard (landing moneda)
     router.refresh();
   }
 
@@ -65,26 +72,27 @@ export default function DashboardNav() {
         </div>
 
         <nav style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link href="/dashboard" style={navLink("/dashboard", pathname === "/dashboard")}>
+          <Link href="/dashboard" style={navLink("/dashboard")}>
             Análisis
           </Link>
 
-          <Link
-            href="/dashboard/bitacora"
-            style={navLink("/dashboard/bitacora", pathname?.startsWith("/dashboard/bitacora"))}
-          >
+          <Link href="/dashboard/bitacora" style={navLink("/dashboard/bitacora")}>
             Bitácora
           </Link>
 
-          <Link
-            href="/dashboard/libro"
-            style={navLink("/dashboard/libro", pathname?.startsWith("/dashboard/libro"))}
-          >
+          <Link href="/dashboard/libro" style={navLink("/dashboard/libro")}>
             Libro
           </Link>
 
-          <Link href="/" style={navLink("/", false)}>
+          <Link href="/dashboard/inicio" style={navLink("/dashboard/inicio")}>
             Inicio
+          </Link>
+
+          <Link
+            href="/dashboard/notificaciones"
+            style={navLink("/dashboard/notificaciones")}
+          >
+            Notificaciones
           </Link>
 
           <button
@@ -95,7 +103,7 @@ export default function DashboardNav() {
               border: "1px solid rgba(255,80,80,0.55)",
               background: "rgba(255,80,80,0.10)",
               color: "#fff",
-              fontWeight: 800,
+              fontWeight: 900,
               cursor: "pointer",
             }}
           >

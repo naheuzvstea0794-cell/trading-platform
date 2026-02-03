@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function LibroPage() {
+export default function NotificacionesPage() {
   const router = useRouter();
+  const [items, setItems] = useState<string[]>([
+    "Aún no hay notificaciones. (Luego conectamos comentarios/likes reales)",
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -24,10 +27,14 @@ export default function LibroPage() {
         color: "#F5F7FA",
       }}
     >
-      <h1>Libro</h1>
-      <p style={{ color: "#9CA3AF" }}>
-        Aquí irá el contenido del Libro (lo dejamos listo para construirlo).
-      </p>
+      <h1>Notificaciones</h1>
+      <ul style={{ marginTop: 12, color: "#9CA3AF" }}>
+        {items.map((x, i) => (
+          <li key={i} style={{ marginBottom: 8 }}>
+            {x}
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }

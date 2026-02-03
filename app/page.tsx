@@ -61,7 +61,7 @@ export default function Home() {
             Libro
           </a>
           <a style={ctaStyle(colors)} href="/dashboard">
-            Área privada
+            Ingresar
           </a>
         </nav>
       </header>
