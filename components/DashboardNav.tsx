@@ -23,7 +23,7 @@ export default function DashboardNav() {
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/login");
+    router.replace("/");      // ✅ vuelve al inicio bonito
     router.refresh();
   }
 
