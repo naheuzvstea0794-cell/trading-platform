@@ -8,13 +8,10 @@ export default function AxisCoin() {
   return (
     <div className="coinStage">
       <div className="coin" style={{ ["--t" as any]: `${thickness}px` }}>
-
         {/* FRONT */}
         <div className="face front" />
-
         {/* BACK */}
         <div className="face back" />
-
         {/* EDGE */}
         <div className="edge" />
       </div>
@@ -40,26 +37,29 @@ export default function AxisCoin() {
           position: absolute;
           inset: 0;
           border-radius: 999px;
+          overflow: hidden;
           backface-visibility: hidden;
           transform-style: preserve-3d;
-          overflow: hidden;
-          box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-          background-size: 180%;   /* 🔥 zoom interno */
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+
+          /* 🔥 recorte visual: “solo círculo interno” */
+          background-size: 180%;
           background-position: center;
           background-repeat: no-repeat;
+          background-color: transparent;
         }
 
         .front {
           transform: translateZ(calc(var(--t) / 2));
-          background-image: url("/axis-front.jpeg");
+          background-image: url("/assets/axis-front.jpeg");
         }
 
         .back {
           transform: rotateY(180deg) translateZ(calc(var(--t) / 2));
-          background-image: url("/axis-back.jpeg");
+          background-image: url("/assets/axis-back.jpeg");
         }
 
-        /* Lateral oscuro profesional */
+        /* Lateral oscuro */
         .edge {
           position: absolute;
           inset: 0;
@@ -76,12 +76,16 @@ export default function AxisCoin() {
             #1c1c1c 80%,
             #0f0f0f 100%
           );
-          box-shadow: 0 0 0 2px rgba(0,0,0,0.8);
+          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8);
         }
 
         @keyframes spin {
-          0% { transform: rotateY(0deg); }
-          100% { transform: rotateY(360deg); }
+          0% {
+            transform: rotateY(0deg);
+          }
+          100% {
+            transform: rotateY(360deg);
+          }
         }
       `}</style>
     </div>
