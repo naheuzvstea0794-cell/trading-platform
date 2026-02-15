@@ -3,12 +3,8 @@
 import React from "react";
 
 export default function AxisCoin() {
-  const thickness = 40; // grosor
-  const size = 260; // tamaño moneda (antes estaba más grande)
-  const segments = 72; // más segmentos = canto más sólido
-
-  // radio del cilindro (aprox)
-  const radius = size / 2;
+  const thickness = 40; // grosor (sube/baja aquí)
+  const size = 260; // tamaño (sube/baja aquí)
 
   return (
     <div className="coinStage">
@@ -18,7 +14,6 @@ export default function AxisCoin() {
           {
             ["--t" as any]: `${thickness}px`,
             ["--s" as any]: `${size}px`,
-            ["--r" as any]: `${radius}px`,
           } as any
         }
       >
@@ -28,21 +23,9 @@ export default function AxisCoin() {
         {/* BACK */}
         <div className="face back" />
 
-        {/* EDGE (cilindro con tiras) */}
-        <div className="edgeWrap" aria-hidden="true">
-          {Array.from({ length: segments }).map((_, i) => (
-            <div
-              key={i}
-              className="edgeSeg"
-              style={
-                {
-                  ["--i" as any]: i,
-                  ["--n" as any]: segments,
-                } as any
-              }
-            />
-          ))}
-        </div>
+        {/* EDGE (un solo borde, pero sin “vacío”) */}
+        <div className="edge" />
+        <div className="edge2" />
       </div>
 
       <style jsx>{`
@@ -59,7 +42,7 @@ export default function AxisCoin() {
           height: var(--s);
           position: relative;
           transform-style: preserve-3d;
-          animation: spin 3.5s linear infinite;
+          animation: spin 3.2s linear infinite;
         }
 
         .face {
@@ -67,20 +50,17 @@ export default function AxisCoin() {
           inset: 0;
           border-radius: 999px;
           overflow: hidden;
-          backface-visibility: hidden;
-          transform-style: preserve-3d;
-
-          /* recorte visual: “solo círculo interno” */
-          background-size: 180%;
+          background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
 
-          /* ayuda a esconder “seams” */
+          /* clave: evita que se “vea” la otra cara y genere línea */
+          backface-visibility: hidden;
+
           box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-          outline: 1px solid rgba(0, 0, 0, 0.18);
         }
 
-        /* ✅ separo un poquito para evitar la línea (z-fighting) */
+        /* ✅ separo 0.6px para eliminar la línea del centro */
         .front {
           transform: translateZ(calc((var(--t) / 2) + 0.6px));
           background-image: url("/assets/axis-front.jpeg");
@@ -91,40 +71,38 @@ export default function AxisCoin() {
           background-image: url("/assets/axis-back.jpeg");
         }
 
-        .edgeWrap {
-          position: absolute;
-          inset: 0;
-          transform-style: preserve-3d;
-        }
-
-        /* cada tira del canto */
-        .edgeSeg {
+        /* Borde oscuro grueso */
+        .edge,
+        .edge2 {
           position: absolute;
           top: 0;
-          left: 50%;
           height: 100%;
-          width: 6px; /* grosor visual del canto */
-          transform-style: preserve-3d;
+          width: var(--t);
+          left: calc(50% - (var(--t) / 2));
+          border-radius: 999px;
 
-          /* cilindro */
-          transform:
-            rotateY(calc((360deg / var(--n)) * var(--i)))
-            translateZ(calc(var(--r) - 3px))
-            translateX(-50%);
+          /* IMPORTANTE: que se vea por ambos lados (evita “barra vacía”) */
+          backface-visibility: visible;
 
-          /* canto oscuro */
+          /* borde oscuro con volumen */
           background: linear-gradient(
             to bottom,
-            #0b0b0b 0%,
+            #050505 0%,
             #1a1a1a 22%,
-            #050505 50%,
+            #0a0a0a 50%,
             #1a1a1a 78%,
-            #0b0b0b 100%
+            #050505 100%
           );
+          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+            0 18px 60px rgba(0, 0, 0, 0.45);
+        }
 
-          /* suaviza el “vacío/barra” */
-          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
-          opacity: 0.98;
+        /* Dos bordes cruzados (NO cilindro): evita que al girar se vea “hueco” */
+        .edge {
+          transform: rotateY(90deg) translateZ(0px);
+        }
+        .edge2 {
+          transform: rotateY(90deg) rotateZ(90deg) translateZ(0px);
         }
 
         @keyframes spin {
