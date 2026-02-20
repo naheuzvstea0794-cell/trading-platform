@@ -3,100 +3,97 @@
 import React from "react";
 
 export default function AxisCoin() {
-  const size = 260;       // tamaño del “área” donde vive la moneda
-  const coinSize = 180;   // tamaño REAL del círculo (solo el círculo interno)
-  const thickness = 34;   // grosor del borde cuando gira (oscuro)
+  /**
+   * Ajustes rápidos:
+   * - innerRadius: qué tanto "recortamos" (más pequeño = recorta más)
+   * - zoom: agranda la imagen dentro del círculo (para que no se vea el aro externo)
+   */
+  const innerRadius = 0.36; // 0.34–0.40 suele funcionar (prueba 0.36)
+  const zoom = 1.55; // 1.40–1.80 (sube si aún se ve el aro externo)
 
   return (
-    <div
-      className="stage"
-      style={
-        {
-          ["--stage" as any]: `${size}px`,
-          ["--coin" as any]: `${coinSize}px`,
-          ["--t" as any]: `${thickness}px`,
-        } as any
-      }
-    >
-      <div className="coin">
-        {/* FRONT (recortado: solo círculo interno) */}
+    <div className="coinStage">
+      <div
+        className="coin"
+        style={
+          {
+            ["--r" as any]: innerRadius,
+            ["--z" as any]: zoom,
+          } as React.CSSProperties
+        }
+      >
+        {/* FRONT */}
         <div className="face front" />
 
-        {/* BACK (recortado: solo círculo interno) */}
+        {/* BACK */}
         <div className="face back" />
-
-        {/* EDGE: UNA SOLA PIEZA (sin “palo”) */}
-        <div className="edge" />
       </div>
 
       <style jsx>{`
-        .stage {
-          width: var(--stage);
-          height: var(--stage);
+        .coinStage {
+          width: 220px;
+          height: 220px;
+          perspective: 900px;
           display: grid;
           place-items: center;
-          perspective: 1200px;
         }
 
         .coin {
-          width: var(--coin);
-          height: var(--coin);
+          width: 180px;
+          height: 180px;
           position: relative;
           transform-style: preserve-3d;
-          animation: spin 3.2s linear infinite;
+          animation: spin 2.6s linear infinite;
         }
 
         .face {
           position: absolute;
           inset: 0;
           border-radius: 999px;
-          overflow: hidden;
-
-          /* evita artefactos */
+          transform-style: preserve-3d;
           backface-visibility: hidden;
-
-          /* solo círculo interno (recorte real) */
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
-
-          box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+          -webkit-backface-visibility: hidden;
+          overflow: hidden;
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
         }
 
-        /* ✅ separo un poquito para eliminar “línea”/costura */
+        /* “Recorte” por máscara: solo deja visible el círculo interno */
+        .face::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 999px;
+
+          /* Imagen como background */
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: calc(var(--z) * 100%) calc(var(--z) * 100%);
+
+          /* Mask circular (solo círculo interno) */
+          -webkit-mask-image: radial-gradient(
+            circle at 50% 50%,
+            #000 0 calc(var(--r) * 100%),
+            transparent calc(var(--r) * 100% + 0.6%)
+          );
+          mask-image: radial-gradient(
+            circle at 50% 50%,
+            #000 0 calc(var(--r) * 100%),
+            transparent calc(var(--r) * 100% + 0.6%)
+          );
+        }
+
         .front {
-          transform: translateZ(calc((var(--t) / 2) + 0.6px));
+          transform: translateZ(1px);
+        }
+        .front::before {
           background-image: url("/assets/axis-front.jpeg");
         }
 
         .back {
-          transform: rotateY(180deg) translateZ(calc((var(--t) / 2) + 0.6px));
-          background-image: url("/assets/axis-back.jpeg");
+          transform: rotateY(180deg) translateZ(1px);
         }
-
-        /* ✅ borde grueso oscuro SOLO cuando está de lado */
-        .edge {
-          position: absolute;
-          top: 0;
-          height: 100%;
-          width: var(--t);
-          left: calc(50% - (var(--t) / 2));
-          border-radius: 999px;
-
-          transform: rotateY(90deg);
-
-          /* borde oscuro con “volumen” */
-          background: linear-gradient(
-            to bottom,
-            #050505 0%,
-            #171717 18%,
-            #070707 50%,
-            #171717 82%,
-            #050505 100%
-          );
-
-          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6),
-            0 18px 60px rgba(0, 0, 0, 0.45);
+        .back::before {
+          background-image: url("/assets/axis-back.jpeg");
         }
 
         @keyframes spin {
