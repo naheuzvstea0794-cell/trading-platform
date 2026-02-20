@@ -8,8 +8,8 @@ export default function AxisCoin() {
    * - innerRadius: qué tanto "recortamos" (más pequeño = recorta más)
    * - zoom: agranda la imagen dentro del círculo (para que no se vea el aro externo)
    */
-  const innerRadius = 0.36; // 0.34–0.40 suele funcionar (prueba 0.36)
-  const zoom = 1.55; // 1.40–1.80 (sube si aún se ve el aro externo)
+  const innerRadius = 0.33; // Ajustado para cubrir la parte negra
+  const zoom = 1.8; // Agrandado para cubrir completamente el borde negro
 
   return (
     <div className="coinStage">
@@ -57,19 +57,19 @@ export default function AxisCoin() {
           box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
         }
 
-        /* “Recorte” por máscara: solo deja visible el círculo interno */
+        /* Recorte visual solo del círculo interno */
         .face::before {
           content: "";
           position: absolute;
           inset: 0;
           border-radius: 999px;
 
-          /* Imagen como background */
+          /* Imagen como fondo */
           background-repeat: no-repeat;
           background-position: center;
           background-size: calc(var(--z) * 100%) calc(var(--z) * 100%);
 
-          /* Mask circular (solo círculo interno) */
+          /* Mascara circular (solo círculo interno visible) */
           -webkit-mask-image: radial-gradient(
             circle at 50% 50%,
             #000 0 calc(var(--r) * 100%),
